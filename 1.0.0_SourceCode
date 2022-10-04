@@ -1,0 +1,227 @@
+# include <stdio.h>
+# include <stdlib.h>
+# include <time.h>
+# include <stdbool.h>
+# include <malloc.h>
+# include <termios.h>
+# include <unistd.h>
+
+// queue
+typedef struct queue queue;
+queue* newQueue(int);
+void freeQueue(queue*);
+bool queueIsEmpty(queue*);
+void queuePush(queue*, int);
+void queuePop(queue*);
+void queuePrint(queue*);
+
+// general function
+int getch(void);
+int randInt(int, int);
+void program(queue*);
+void loadMap(queue*);
+void showMap(queue*);
+bool checkInput(int, queue*);
+
+int main(void) {
+  srand(time(NULL));
+
+  queue* map = newQueue(10);
+
+  loadMap(map);
+  program(map);
+
+  return 0;
+}
+
+// queue
+struct queue {
+  size_t size;
+  size_t capacity;
+  int head;
+  int tail;
+  int* elements;
+};
+
+queue* newQueue(int capacity) {
+  queue* q = malloc(sizeof(queue));
+  q->size = 0;
+  q->capacity = capacity;
+  q->head = -1;
+  q->tail = -1;
+  q->elements = malloc(capacity * sizeof(int));
+  return q;
+}
+
+void freeQueue(queue* q) {
+  free(q->elements);
+  free(q);
+}
+
+bool queueIsEmpty(queue* q){
+  return q->size == 0;
+}
+
+void queuePush(queue* q, int target){
+  if(queueIsEmpty(q)){
+    q->size++;
+    q->head = 0;
+    q->tail++;
+    q->elements[q->tail] = target;
+  }else if(q->size < q->capacity){
+    q->size++;
+    q->tail++;
+    q->elements[q->tail] = target;
+    // printf("push directly, size:%d\n", q->size);
+    // printf("push directly, target:%d, elements:%d\n", target, q->elements[q->tail]);
+  }else{
+    q->capacity = q->size * 2;
+    realloc(q->elements, q->capacity * sizeof(int));
+    q->size++;
+    q->tail++;
+    q->elements[q->tail] = target;
+    // printf("expand, capacity:%d\n", q->capacity);
+  }
+}
+
+void queuePop(queue* q){
+  if(!queueIsEmpty(q)){
+    int* oldArr = q->elements+1;
+    // maybe here has the problem
+    q->size--;
+    q->tail--;
+    for(int i = 0; i < q->size; i++){
+      q->elements[i] = *(oldArr+i);
+    }
+  }
+}
+
+// print queue to test
+void queuePrint(queue* q){
+  for(int i = 0; i < q->size; i++) {
+    printf("%d ", q->elements[i]);
+  }
+  printf("\n");
+}
+
+void queuePrintArr(queue* q){
+  for(int i = 0; i < q->size; i++) {
+    printf("%d ", q->elements + i);
+  }
+  printf("\n");
+}
+
+// replit doesn't has <conio.h> so implement here directly
+int getch(void){
+    struct termios oldattr, newattr;
+    int ch;
+    tcgetattr(STDIN_FILENO, &oldattr );
+    newattr = oldattr;
+    newattr.c_lflag &= ~( ICANON | ECHO );
+    tcsetattr(STDIN_FILENO, TCSANOW, &newattr );
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldattr );
+    return ch;
+}
+
+int randInt(int begin, int end){
+  int diff = end - begin;
+  return rand() % (diff+1) + begin;
+}
+
+void program(queue* map) {
+  bool running = true;
+  int userFault = 0;
+  
+  while(running){
+    // printf("%d\n", running);
+    bool fault = false;
+    char userInput = getch();
+    
+    // handle input
+    switch(userInput){
+      case 'd':
+        fault = !checkInput(1, map);
+        break;
+      case 'f':
+        fault = !checkInput(2, map);
+        break;
+      case 'j':
+        fault = !checkInput(3, map);
+        break;
+      case 'k':
+        fault = !checkInput(4, map);
+        break;
+    }
+    
+    if(!fault){
+      queuePop(map);
+      queuePush(map, randInt(1, 4));
+    }else{
+      userFault++;
+      // printf("userFault = %d\n", userFault);
+    }
+    
+    if(userFault >= 3) {
+      running = false;
+      // printf("fault\n");
+    }
+
+    // refresh screen
+    system("clear");
+    printf("        fault:%d\n", userFault);
+    showMap(map);
+    // printf("%d\n", running);
+  }
+}
+
+void loadMap(queue* map) {
+  // generate map's elements
+  for(int i = 0; i < map->capacity; i++) {
+    queuePush(map, randInt(1, 4));
+  }
+
+  showMap(map);
+  
+  // print queue to test
+  // for(int i = 1; i < 11; i++){
+  //   printf("%d.ori:", i);
+  //   queuePrint(map);
+  //   queuePop(map);
+  //   printf("%d.pop:", i);
+  //   queuePrint(map);
+  //   queuePush(map, randInt(1, 4));
+  //   printf("%d.push:", i);
+  //   queuePrint(map);
+  //   printf("\n");
+  // }
+}
+
+void showMap(queue* map){
+  // show whole map's element on screen 
+  for(int i = map->capacity-1; i >= 0; i--){
+    switch(map->elements[i]){
+      case 1:
+        printf("*      ");
+        break;
+      case 2:
+        printf("  *    ");
+        break;
+      case 3:
+        printf("    *  ");
+        break;
+      case 4:
+        printf("      *");
+        break;
+    }
+    printf("\n");
+  }
+}
+
+bool checkInput(int input, queue* map){
+  // printf("input = %d, head = %d\n", input, map->head);
+  if(input == map->elements[map->head]){
+    return true;
+  }
+  return false;
+}
