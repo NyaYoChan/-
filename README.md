@@ -16,4 +16,9 @@ Summary
     > Get user's input then check if user hit correct position.
     > if user hit correct, pop bottom rows and generate a new row with one '*' at random column to the top.
     >> else user's fault increase.
-    > if user's fault more than 3 times, exit program.
+    > if user's fault more than 3 times, exit program. 
+    
+ ### Implementation
+ > 2022.10.4 complete.
+ > Use C18.
+ > We can use this training program with pressing 'd', 'f', 'j', 'k'.  
