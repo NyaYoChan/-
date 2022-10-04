@@ -1,5 +1,6 @@
 # FingersTrainingProgram
 
+
 Summary
 ---
   A program to help user improve fingers flexibility and coordination.
@@ -19,6 +20,6 @@ Summary
     > if user's fault more than 3 times, exit program. 
     
  ### Implementation
- > 2022.10.4 complete.
- > Use C18.
- > We can use this training program with pressing 'd', 'f', 'j', 'k'.  
+    > 2022.10.4 complete.
+    > Use C18.
+    > We can use this training program with pressing 'd', 'f', 'j', 'k'.  
