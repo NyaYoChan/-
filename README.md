@@ -19,7 +19,20 @@ Summary
     >> else user's fault increase.
     > if user's fault more than 3 times, exit program. 
     
- ### Implementation
+  ### Implementation
     > 2022.10.4 complete.
     > Use C18.
-    > We can use this training program with pressing 'd', 'f', 'j', 'k'.  
+    > We can use this training program with pressing 'd', 'f', 'j', 'k'.
+    
+(v1.1.0) Development Process
+---
+  ### New Update
+    > Add a menu and tutorial.
+    
+  ### Design
+    > A menu show title and let user choose start program or look tutorial.
+    > Tutorial show how to use this program by text.
+    > Press q to exit whole program when user at menu and back to menu when user at tutorial.
+  
+  ### Implementation
+  
