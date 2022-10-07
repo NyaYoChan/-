@@ -18,7 +18,8 @@ Summary
     > Show user's score when user quit program.
   
   ### Implementation
-  
+    > 2022.10.7 complete.
+    > Use C18.
 
 (v1.0.0) Development Process
 ---
