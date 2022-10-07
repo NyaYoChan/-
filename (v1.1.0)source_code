@@ -1,0 +1,386 @@
+# include <stdio.h>
+# include <stdlib.h>
+# include <time.h>
+# include <stdbool.h>
+# include <malloc.h>
+# include <termios.h>
+# include <unistd.h>
+
+// queue
+typedef struct queue queue;
+queue* newQueue(int);
+void freeQueue(queue*);
+bool queueIsEmpty(queue*);
+void queuePush(queue*, int);
+void queuePop(queue*);
+void queuePrint(queue*);
+
+// general function
+int getch(void);
+int randInt(int, int);
+void menu(void);
+void tutorial(void);
+void program(queue*);
+void loadMap(queue*);
+void showMap(queue*);
+void showScore(int);
+bool checkInput(int, queue*);
+
+// ASCII numbers
+
+char nums[10][6][10] = {{"  ___  ", " / _ \\ ", "| | | |", "| | | |", "| |_| |", " \\___/ "}, {"  __ ", " /_ |", "  | |", "  | |", "  | |", "  |_|"}, {"  ___  ", " |__ \\ ", "    ) |", "   / / ", "  / /_ ", " |____|"}, {"  ____  ", " |___ \\ ", "   __) |", "  |__ < ", "  ___) |", " |____/ "}, {"  _  _   ", " | || |  ", " | || |_ ", " |__   _|", "    | |  ", "    |_|  "}, {"  _____ ", " | ____|", " | |__  ", " |___ \\ ", "  ___) |", " |____/ "}, {"    __  ", "   / /  ", "  / /_  ", " |  _ \\ ", " | (_) |", "  \\___/ "}, {"  ______ ", " |____  |", "     / / ", "    / /  ", "   / /   ", "  /_/    "},{"   ___  ", "  / _ \\ ", " | (_) |", "  > _ < ", " | (_) |", "  \\___/ "}, {"   ___  ", "  / _ \\ ", " | (_) |", "  \\__  |", "    / / ", "   /_/  "}};
+
+
+
+// global variable
+queue* map;
+
+int main(void) {
+  srand(time(NULL));
+
+  menu();
+
+  return 0;
+}
+
+// queue
+struct queue {
+  size_t size;
+  size_t capacity;
+  int head;
+  int tail;
+  int* elements;
+};
+
+queue* newQueue(int capacity) {
+  queue* q = malloc(sizeof(queue));
+  q->size = 0;
+  q->capacity = capacity;
+  q->head = -1;
+  q->tail = -1;
+  q->elements = malloc(capacity * sizeof(int));
+  return q;
+}
+
+void freeQueue(queue* q) {
+  free(q->elements);
+  free(q);
+}
+
+bool queueIsEmpty(queue* q){
+  return q->size == 0;
+}
+
+void queuePush(queue* q, int target){
+  if(queueIsEmpty(q)){
+    q->size++;
+    q->head = 0;
+    q->tail++;
+    q->elements[q->tail] = target;
+  }else if(q->size < q->capacity){
+    q->size++;
+    q->tail++;
+    q->elements[q->tail] = target;
+    // printf("push directly, size:%d\n", q->size);
+    // printf("push directly, target:%d, elements:%d\n", target, q->elements[q->tail]);
+  }else{
+    q->capacity = q->size * 2;
+    realloc(q->elements, q->capacity * sizeof(int));
+    q->size++;
+    q->tail++;
+    q->elements[q->tail] = target;
+    // printf("expand, capacity:%d\n", q->capacity);
+  }
+}
+
+void queuePop(queue* q){
+  if(!queueIsEmpty(q)){
+    int* oldArr = q->elements+1;
+    // maybe here has the problem
+    q->size--;
+    q->tail--;
+    for(int i = 0; i < q->size; i++){
+      q->elements[i] = *(oldArr+i);
+    }
+  }
+}
+
+// print queue to test
+void queuePrint(queue* q){
+  for(int i = 0; i < q->size; i++) {
+    printf("%d ", q->elements[i]);
+  }
+  printf("\n");
+}
+
+void queuePrintArr(queue* q){
+  for(int i = 0; i < q->size; i++) {
+    printf("%d ", q->elements + i);
+  }
+  printf("\n");
+}
+
+// replit doesn't has <conio.h> so implement here directly
+int getch(void){
+    struct termios oldattr, newattr;
+    int ch;
+    tcgetattr(STDIN_FILENO, &oldattr );
+    newattr = oldattr;
+    newattr.c_lflag &= ~( ICANON | ECHO );
+    tcsetattr(STDIN_FILENO, TCSANOW, &newattr );
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldattr );
+    return ch;
+}
+
+int randInt(int begin, int end){
+  int diff = end - begin;
+  return rand() % (diff+1) + begin;
+}
+
+void menu(void){
+  // show menu
+  // title: FingersTrainingProgram
+  printf("  ______ _                        _______        _       _             _____                                     \n");
+  printf(" |  ____(_)                      |__   __|      (_)     (_)           |  __ \\                                    \n");
+  printf(" | |__   _ _ __   __ _  ___ _ __ ___| |_ __ __ _ _ _ __  _ _ __   __ _| |__) | __ ___   __ _ _ __ __ _ _ __ ___  \n");
+  printf(" |  __| | | '_ \\ / _` |/ _ \\ '__/ __| | '__/ _` | | '_ \\| | '_ \\ / _` |  ___/ '__/ _ \\ / _` | '__/ _` | '_ ` _ \\ \n");
+  printf(" | |    | | | | | (_| |  __/ |  \\__ \\ | | | (_| | | | | | | | | | (_| | |   | | | (_) | (_| | | | (_| | | | | | |\n");
+  printf(" |_|    |_|_| |_|\\__, |\\___|_|  |___/_|_|  \\__,_|_|_| |_|_|_| |_|\\__, |_|   |_|  \\___/ \\__, |_|  \\__,_|_| |_| |_|\n");
+  printf("                  __/ |                                           __/ |                 __/ |                    \n");
+  printf("                 |___/                                           |___/                 |___/                     \n");
+  printf("\n");
+  printf("\n");
+  
+  // option: Press 's' to start
+  printf("Press 's' to start\n");
+  printf("\n");
+
+  // option: Press 't' to tutorial
+  printf("Press 't' to tutorial\n");
+  printf("\n");
+
+  // option: Press 'q' to quit
+  printf("Press 'q' to quit\n");
+  printf("\n");
+  
+  bool running = true;
+  while(running){
+    char userInput = getch();
+    switch(userInput){
+      case 'q':
+        running = false;
+        break;
+      case 's':
+        system("clear");
+        map = newQueue(10);
+        loadMap(map);
+        program(map);
+        running = false;
+        break;
+      case 't':
+        system("clear");
+        tutorial();
+        running = false;
+        break;
+    }
+  }
+  
+}
+
+void tutorial(){
+  // title: Tutorial
+  printf("  _______    _             _       _ \n");
+  printf(" |__   __|  | |           (_)     | |\n");
+  printf("    | |_   _| |_ ___  _ __ _  __ _| |\n");
+  printf("    | | | | | __/ _ \\| '__| |/ _` | |\n");
+  printf("    | | |_| | || (_) | |  | | (_| | |\n");
+  printf("    |_|\\__,_|\\__\\___/|_|  |_|\\__,_|_|\n");
+  printf("\n");
+  printf("\n");
+  
+  // context
+  printf("When you start program you will see some'*' like:\n");
+  printf("\n");
+  printf("      *\n");
+  printf("    *  \n");
+  printf("  *    \n");
+  printf("*      \n");
+  printf("\n");
+  printf("You sould press 'd', 'f', 'j', 'k' sequentially\n");
+  printf("\n");
+  printf("When you reach 3 fault, program will return to menu automatically\n");
+  printf("\n");
+  printf("You can press q if you want to quit program and your score will show\n");
+  printf("\n");
+  printf("\n");
+  
+  // option: Press 'q' to back to menu
+  printf("Press 'q' to back to menu\n");
+  printf("\n");
+  
+  bool running = true;
+  while(running){
+    char userInput = getch();
+    switch(userInput){
+      case 'q':
+        system("clear");
+        menu();
+        running = false;
+        break;
+    }
+  }
+}
+
+void program(queue* map) {
+  bool running = true;
+  int userFault = 0;
+  int userScore = 0;
+  
+  while(running){
+    // printf("%d\n", running);
+    bool fault = false;
+    char userInput = getch();
+    
+    // handle input
+    switch(userInput){
+      case 'd':
+        fault = !checkInput(1, map);
+        break;
+      case 'f':
+        fault = !checkInput(2, map);
+        break;
+      case 'j':
+        fault = !checkInput(3, map);
+        break;
+      case 'k':
+        fault = !checkInput(4, map);
+        break;
+      case 'q':
+        system("clear");
+        showScore(userScore);
+        break;
+      default:
+        break;
+    }
+    
+    if(!fault){
+      userScore++;
+      queuePop(map);
+      queuePush(map, randInt(1, 4));
+    }else{
+      userFault++;
+      // printf("userFault = %d\n", userFault);
+    }
+    
+    if(userFault >= 3) {
+      running = false;
+      system("clear");
+      showScore(userScore);
+      // printf("fault\n");
+    }
+
+    // refresh screen
+    system("clear");
+    printf("        fault:%d\n", userFault);
+    showMap(map);
+    // printf("%d\n", running);
+  }
+}
+
+void loadMap(queue* map) {
+  // generate map's elements
+  for(int i = 0; i < map->capacity; i++) {
+    queuePush(map, randInt(1, 4));
+  }
+
+  showMap(map);
+  
+  // print queue to test
+  // for(int i = 1; i < 11; i++){
+  //   printf("%d.ori:", i);
+  //   queuePrint(map);
+  //   queuePop(map);
+  //   printf("%d.pop:", i);
+  //   queuePrint(map);
+  //   queuePush(map, randInt(1, 4));
+  //   printf("%d.push:", i);
+  //   queuePrint(map);
+  //   printf("\n");
+  // }
+}
+
+void showMap(queue* map){
+  // show whole map's element on screen 
+  for(int i = map->capacity-1; i >= 0; i--){
+    switch(map->elements[i]){
+      case 1:
+        printf("*      ");
+        break;
+      case 2:
+        printf("  *    ");
+        break;
+      case 3:
+        printf("    *  ");
+        break;
+      case 4:
+        printf("      *");
+        break;
+    }
+    printf("\n");
+  }
+}
+
+void showScore(int score){
+  // show score
+  printf("Your score is:\n");
+
+  // split an interger into digits
+  int digits[10];
+  int digitsSize = 0;
+  while(score > 0 && digitsSize < 10){
+    digits[digitsSize] = score%10;
+    score /= 10;
+    digitsSize++;
+  }
+  
+  if(digitsSize == 0){
+    for(int i = 0; i < 6; i++){
+      printf("%s\n", nums[0][i]); 
+    }
+  }else{
+    for(int i = 0; i < 6; i++){
+      for(int j = digitsSize-1; j >= 0; j--){
+        printf("%s", nums[digits[j]][i]);
+        printf("  ");
+      }
+      printf("\n");
+    }
+  }
+  
+  printf("\n");
+  
+  // option: Press 'q' to back to menu
+  printf("Press 'q' to back to menu\n");
+  printf("\n");
+  
+  bool running = true;
+  while(running){
+    char userInput = getch();
+    switch(userInput){
+      case 'q':
+        system("clear");
+        menu();
+        running = false;
+        break;
+    }
+  }
+}
+
+bool checkInput(int input, queue* map){
+  // printf("input = %d, head = %d\n", input, map->head);
+  if(input == map->elements[map->head]){
+    return true;
+  }
+  return false;
+}
